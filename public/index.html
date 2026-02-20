@@ -101,15 +101,17 @@
       opacity: 0.86;
       margin-bottom: 14px;
       letter-spacing: 0.03em;
+      line-height: 1.35;
     }
 
     .boot-logo {
-      white-space: pre;
-      line-height: 1.02;
-      font-size: clamp(0.62rem, 1.15vw, 1rem);
-      color: #69ffb3;
+      display: block;
+      width: min(420px, 84%);
+      height: auto;
       margin-bottom: 18px;
-      text-shadow: 0 0 10px rgba(80, 255, 160, 0.4);
+      opacity: 0.95;
+      image-rendering: auto;
+      filter: drop-shadow(0 0 10px rgba(80, 255, 160, 0.35));
     }
 
     #boot-output {
@@ -159,29 +161,22 @@
   <div class="screen-wrap">
     <div class="crt-frame">
       <div class="crt-screen">
-        <div class="boot-meta">RetroOS v2.5.71 | Licensed under GNU General Public License v3</div>
-        <div class="boot-logo"> _    ___ _          ____ _   _    _    ____
-| |  / (_) |__   ___/ ___| | | |  / \  |  _ \
-| | / /| | '_ \ / _ \ |   | |_| | / _ \ | | | |
-| |/ / | | |_) |  __/ |___|  _  |/ ___ \| |_| |
-|___/  |_|_.__/ \___|\____|_| |_/_/   \_\____/ </div>
+        <div class="boot-meta">VibeCHAD BETA[ALPHA] V1.0<br />by @c0gnate & @chadswtf</div>
+        <img class="boot-logo" src="./assets/images/ascii-art-text1.png" alt="VibeCHAD ASCII logo" />
         <div id="boot-output" aria-live="polite"></div><span class="cursor" aria-hidden="true"></span>
-        <a class="fallback-link" href="./pirate_chad_v1.html">skip boot</a>
+        <a class="fallback-link" href="./encrypt_chad_v1.html">skip boot</a>
       </div>
     </div>
   </div>
 
   <script>
     const output = document.getElementById("boot-output");
-    const redirectTarget = "./pirate_chad_v1.html";
+    const redirectTarget = "./encrypt_chad_v1.html";
     const typeSpeedMs = 13;
     const lineDelayMs = 46;
     const finishPauseMs = 420;
 
     const lines = [
-      "VibeCHAD BETA[ALPHA] V1.0",
-      "by @c0gnate & @chadswtf",
-      "",
       "initiating VibeCHAD ---------->>[SUCCESS]",
       "compiling greatness ---------->>[SUCCESS]",
       "rendering 'that guy' ----------->>[SUCCESS]",
