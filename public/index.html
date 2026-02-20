@@ -154,6 +154,37 @@
       0% { transform: translateY(-110%); }
       100% { transform: translateY(120%); }
     }
+
+    @media (max-width: 980px) {
+      html,
+      body {
+        overflow: auto;
+      }
+
+      .screen-wrap {
+        min-height: 100dvh;
+        padding: 10px;
+      }
+
+      .crt-frame {
+        height: min(760px, 100dvh);
+        border-radius: 12px;
+        padding: 12px;
+      }
+
+      .crt-screen {
+        padding: 14px;
+      }
+
+      .boot-logo {
+        width: min(360px, 100%);
+      }
+
+      #boot-output {
+        font-size: clamp(0.9rem, 3.8vw, 1.02rem);
+        padding-right: 0;
+      }
+    }
   </style>
 </head>
 <body>

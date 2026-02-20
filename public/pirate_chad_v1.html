@@ -746,10 +746,14 @@
       body {
         overflow: auto;
         display: block;
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
       }
 
       .shell {
         width: 100%;
+        max-width: 100vw;
         height: auto;
         min-height: 100dvh;
         margin: 0;
@@ -774,8 +778,50 @@
         border-radius: 0;
       }
 
+      .window-chrome {
+        height: 36px;
+        padding: 0 0.65rem;
+        border-radius: 0;
+      }
+
+      .chrome-title {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.72rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+        padding: 0 0.45rem;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .topbar > div:last-child {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+      }
+
       .idea-grid {
         grid-template-columns: 1fr;
+      }
+
+      .msg-user {
+        max-width: 100%;
+      }
+
+      .thread,
+      .composer {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+
+      .composer-wrap input {
+        font-size: 16px;
       }
 
       .sidebar-bottom {
@@ -788,6 +834,24 @@
 
       .crt-ticker {
         height: 46px;
+      }
+
+      .crt-ticker-track {
+        font-size: 0.74rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .sidebar {
+        padding: 0.75rem;
+      }
+
+      .sidebar-card {
+        padding: 0.7rem;
+      }
+
+      .ghost-btn {
+        min-height: 36px;
       }
     }
 
