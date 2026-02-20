@@ -8,9 +8,9 @@ COPY package*.json ./
 COPY scripts ./scripts
 RUN npm ci
 
-# Install ffmpeg and curl
+# Install ffmpeg, curl, and python3 (required by Linux yt-dlp launcher)
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ffmpeg curl ca-certificates \
+  && apt-get install -y --no-install-recommends ffmpeg curl ca-certificates python3 \
   && rm -rf /var/lib/apt/lists/*
 
 # Install yt-dlp
