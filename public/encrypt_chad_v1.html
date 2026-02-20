@@ -460,6 +460,36 @@
       color: #ffffff;
     }
 
+    .mode-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.2rem;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .mode-switch-btn {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-1);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: 150ms ease;
+    }
+
+    .mode-switch-btn.is-active {
+      border-color: var(--line-strong);
+      color: #ffffff;
+      background: rgba(0, 255, 136, 0.16);
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.2) inset;
+    }
+
     .ghost-btn svg,
     .ghost-btn i {
       color: #ff2ec9 !important;
@@ -842,8 +872,8 @@
       </div>
 
       <div class="sidebar-card">
-        <p class="text-sm text-slate-200 font-medium">Encrypt files in one click</p>
-        <p class="muted mt-1">Upload any file and encrypt it instantly in-browser. You get an encrypted file and a decryption key package.</p>
+        <p id="sidebar-title" class="text-sm text-slate-200 font-medium">Encrypt files in one click</p>
+        <p id="sidebar-copy" class="muted mt-1">Upload any file and encrypt it instantly in-browser. You get an encrypted file and a decryption key package.</p>
         <div class="mt-3 flex flex-wrap gap-2">
           <button class="chip" onclick="setTargetAlgo('aes-256-gcm')">AES-256-GCM</button>
         </div>
@@ -886,17 +916,25 @@
     <section class="main">
       <div class="topbar">
         <div>
-          <p class="font-medium tracking-[0.16em]">EncryptCHAD™ File Encryptor</p>
-          <p class="text-sm text-slate-200">Drop in any file, encrypt it, and download the encrypted output with key package.</p>
+          <p id="main-title" class="font-medium tracking-[0.16em]">EncryptCHAD™ File Encryptor</p>
+          <p id="main-copy" class="text-sm text-slate-200">Drop in any file, encrypt it, and download the encrypted output with key package.</p>
         </div>
         <div class="flex items-center gap-2">
+          <div class="mode-switch" role="group" aria-label="Encrypt or decrypt mode">
+            <button id="mode-encrypt-btn" class="mode-switch-btn is-active" type="button">Encrypt</button>
+            <button id="mode-decrypt-btn" class="mode-switch-btn" type="button">Decrypt</button>
+          </div>
           <button class="ghost-btn" onclick="triggerFilePicker()">
             <i data-lucide="upload" class="w-4 h-4"></i>
             Pick File
           </button>
-          <button class="ghost-btn" onclick="encryptNow()">
-            <i data-lucide="lock" class="w-4 h-4"></i>
-            Encrypt
+          <button id="pick-key-btn" class="ghost-btn hidden" onclick="triggerKeyPicker()">
+            <i data-lucide="key" class="w-4 h-4"></i>
+            Pick Key
+          </button>
+          <button id="run-btn" class="ghost-btn" onclick="runCurrentMode()">
+            <i id="run-btn-icon" data-lucide="lock" class="w-4 h-4"></i>
+            <span id="run-btn-label">Encrypt</span>
           </button>
           <button class="ghost-btn" onclick="downloadLatest()">
             <i data-lucide="download" class="w-4 h-4"></i>
@@ -907,8 +945,8 @@
 
       <div id="thread" class="thread custom-scroll">
         <div class="msg msg-ai">
-          <p class="font-medium" style="color: #00e9ff;">Use the input bar below to upload a file, then click encrypt.</p>
-          <p class="muted mt-1">Encrypted outputs and key packages appear here and in the 'Recent outputs' panel.</p>
+          <p id="thread-intro-title" class="font-medium" style="color: #00e9ff;">Use the input bar below to upload a file, then click encrypt.</p>
+          <p id="thread-intro-copy" class="muted mt-1">Encrypted outputs and key packages appear here and in the 'Recent outputs' panel.</p>
         </div>
       </div>
 
@@ -916,10 +954,11 @@
         <form id="encryptor-form" class="composer-wrap">
           <i data-lucide="paperclip" class="w-4 h-4 text-slate-400 composer-search-icon"></i>
           <input id="file-input" type="file" />
+          <input id="key-file-input" type="file" class="hidden" accept=".json,application/json,.key" />
           <select id="algo-select" class="chip" aria-label="Select encryption algorithm">
             <option value="aes-256-gcm">AES-256-GCM</option>
           </select>
-          <button type="submit" class="send-btn" aria-label="Encrypt file">
+          <button id="form-submit-btn" type="submit" class="send-btn" aria-label="Run encrypt or decrypt">
             <i data-lucide="arrow-up" class="w-4 h-4"></i>
           </button>
         </form>
@@ -932,15 +971,29 @@
   <script>
     const thread = document.getElementById("thread");
     const fileInput = document.getElementById("file-input");
+    const keyFileInput = document.getElementById("key-file-input");
     const algoSelect = document.getElementById("algo-select");
     const encryptorForm = document.getElementById("encryptor-form");
     const savedList = document.getElementById("saved-list");
     const toast = document.getElementById("toast");
     const modeToggleBtn = document.getElementById("mode-toggle-btn");
+    const modeEncryptBtn = document.getElementById("mode-encrypt-btn");
+    const modeDecryptBtn = document.getElementById("mode-decrypt-btn");
+    const sidebarTitle = document.getElementById("sidebar-title");
+    const sidebarCopy = document.getElementById("sidebar-copy");
+    const mainTitle = document.getElementById("main-title");
+    const mainCopy = document.getElementById("main-copy");
+    const runBtnLabel = document.getElementById("run-btn-label");
+    const runBtnIcon = document.getElementById("run-btn-icon");
+    const threadIntroTitle = document.getElementById("thread-intro-title");
+    const threadIntroCopy = document.getElementById("thread-intro-copy");
+    const pickKeyBtn = document.getElementById("pick-key-btn");
 
     const MODE_STORAGE_KEY = "vibechad_invert_mode";
+    const ENCRYPTOR_MODE_STORAGE_KEY = "encryptchad_mode";
     const recentOutputs = [];
     let latestOutput = null;
+    let currentMode = "encrypt";
 
     document.addEventListener("DOMContentLoaded", () => {
       lucide.createIcons();
@@ -957,14 +1010,28 @@
         localStorage.setItem(MODE_STORAGE_KEY, isOn ? "1" : "0");
       });
 
+      const savedEncryptorMode = localStorage.getItem(ENCRYPTOR_MODE_STORAGE_KEY);
+      if (savedEncryptorMode === "decrypt") {
+        setEncryptorMode("decrypt");
+      } else {
+        setEncryptorMode("encrypt");
+      }
+
+      modeEncryptBtn.addEventListener("click", () => setEncryptorMode("encrypt"));
+      modeDecryptBtn.addEventListener("click", () => setEncryptorMode("decrypt"));
+
       encryptorForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        await encryptNow();
+        await runCurrentMode();
       });
     });
 
     function triggerFilePicker() {
       fileInput.click();
+    }
+
+    function triggerKeyPicker() {
+      keyFileInput.click();
     }
 
     function setTargetAlgo(algorithm) {
@@ -975,7 +1042,7 @@
     function clearHistory() {
       recentOutputs.forEach((item) => {
         URL.revokeObjectURL(item.url);
-        URL.revokeObjectURL(item.keyUrl);
+        if (item.keyUrl) URL.revokeObjectURL(item.keyUrl);
       });
       recentOutputs.length = 0;
       latestOutput = null;
@@ -985,12 +1052,20 @@
 
     function downloadLatest() {
       if (!latestOutput) {
-        showToast("No encrypted file yet.");
+        showToast("No output file yet.");
         return;
       }
 
       downloadFile(latestOutput.url, latestOutput.name);
-      showToast("Downloaded latest encrypted file.");
+      showToast("Downloaded latest output file.");
+    }
+
+    async function runCurrentMode() {
+      if (currentMode === "decrypt") {
+        await decryptNow();
+        return;
+      }
+      await encryptNow();
     }
 
     async function encryptNow() {
@@ -1016,6 +1091,7 @@
           keyUrl,
           keyPackage: result.keyPackage,
           keyFileName: result.keyFileName,
+          mode: "encrypt",
           time: new Date().toLocaleTimeString()
         };
 
@@ -1032,6 +1108,54 @@
         showToast("File encrypted.");
       } catch (error) {
         showToast(`Encrypt failed: ${error.message}`);
+      }
+    }
+
+    async function decryptNow() {
+      const encryptedFile = fileInput.files && fileInput.files[0];
+      if (!encryptedFile) {
+        showToast("Pick the encrypted file first.");
+        return;
+      }
+
+      const keyFile = keyFileInput.files && keyFileInput.files[0];
+      if (!keyFile) {
+        showToast("Pick the key package file.");
+        return;
+      }
+
+      appendUserMessage(`Decrypt ${encryptedFile.name} with ${keyFile.name}`);
+
+      try {
+        const keyPackageText = await keyFile.text();
+        const result = await decryptFile(encryptedFile, keyPackageText);
+        const outputUrl = URL.createObjectURL(result.blob);
+        const record = {
+          name: result.name,
+          inputName: encryptedFile.name,
+          algorithm: result.algorithm,
+          note: result.note,
+          url: outputUrl,
+          keyUrl: null,
+          keyPackage: "",
+          keyFileName: "",
+          mode: "decrypt",
+          time: new Date().toLocaleTimeString()
+        };
+
+        latestOutput = record;
+        recentOutputs.unshift(record);
+        if (recentOutputs.length > 25) {
+          const dropped = recentOutputs.pop();
+          URL.revokeObjectURL(dropped.url);
+          if (dropped.keyUrl) URL.revokeObjectURL(dropped.keyUrl);
+        }
+
+        appendOutputMessage(record);
+        renderHistory();
+        showToast("File decrypted.");
+      } catch (error) {
+        showToast(`Decrypt failed: ${error.message}`);
       }
     }
 
@@ -1076,6 +1200,69 @@
       };
     }
 
+    async function decryptFile(file, keyPackageText) {
+      let parsed;
+      try {
+        parsed = JSON.parse(keyPackageText);
+      } catch {
+        throw new Error("Invalid key package JSON.");
+      }
+
+      if (!parsed || !parsed.key) {
+        throw new Error("Key package is missing 'key'.");
+      }
+
+      const fileBytes = new Uint8Array(await file.arrayBuffer());
+      if (!fileBytes.length) {
+        throw new Error("Encrypted file is empty.");
+      }
+
+      const hasHeader =
+        fileBytes.length > 16 &&
+        fileBytes[0] === 87 &&
+        fileBytes[1] === 67 &&
+        fileBytes[2] === 72 &&
+        fileBytes[3] === 49;
+
+      const iv = hasHeader
+        ? fileBytes.slice(4, 16)
+        : parsed.iv
+          ? base64ToBytes(parsed.iv)
+          : null;
+
+      if (!iv || iv.length !== 12) {
+        throw new Error("Invalid IV. Use a matching key package.");
+      }
+
+      const ciphertext = hasHeader ? fileBytes.slice(16) : fileBytes;
+      if (!ciphertext.length) {
+        throw new Error("Encrypted payload is empty.");
+      }
+
+      const rawKey = base64ToBytes(parsed.key);
+      if (rawKey.length !== 32) {
+        throw new Error("Invalid key length.");
+      }
+
+      const cryptoKey = await crypto.subtle.importKey("raw", rawKey, { name: "AES-GCM" }, false, ["decrypt"]);
+      const decrypted = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv },
+        cryptoKey,
+        ciphertext
+      );
+
+      const outputName =
+        parsed.originalFile ||
+        (file.name.endsWith(".enc") ? file.name.slice(0, -4) : `${file.name}.decrypted`);
+
+      return {
+        blob: new Blob([decrypted], { type: "application/octet-stream" }),
+        name: outputName,
+        algorithm: "AES-256-GCM",
+        note: "Decrypted in-browser using the provided key package."
+      };
+    }
+
     function concatUint8(...arrays) {
       const total = arrays.reduce((sum, arr) => sum + arr.length, 0);
       const out = new Uint8Array(total);
@@ -1095,6 +1282,17 @@
       return btoa(binary);
     }
 
+    function base64ToBytes(input) {
+      const clean = String(input || "").trim();
+      if (!clean) return new Uint8Array(0);
+      const binary = atob(clean);
+      const out = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        out[i] = binary.charCodeAt(i);
+      }
+      return out;
+    }
+
     function appendUserMessage(text) {
       const user = document.createElement("div");
       user.className = "msg msg-user";
@@ -1106,6 +1304,20 @@
     function appendOutputMessage(record) {
       const msg = document.createElement("div");
       msg.className = "msg msg-ai";
+      if (record.mode === "decrypt") {
+        msg.innerHTML = `
+          <p class="font-semibold text-lg">Decrypted: ${escapeHtml(record.name)}</p>
+          <p class="mt-1">Source: ${escapeHtml(record.inputName)} | Algorithm: ${escapeHtml(record.algorithm)}</p>
+          <p class="muted mt-2 idea-note">${escapeHtml(record.note)}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <a class="ghost-btn" href="${record.url}" download="${escapeHtml(record.name)}">Download file</a>
+          </div>
+        `;
+        thread.appendChild(msg);
+        thread.scrollTop = thread.scrollHeight;
+        return;
+      }
+
       msg.innerHTML = `
         <p class="font-semibold text-lg">Encrypted: ${escapeHtml(record.name)}</p>
         <p class="mt-1">Source: ${escapeHtml(record.inputName)} | Algorithm: ${escapeHtml(record.algorithm)}</p>
@@ -1134,7 +1346,7 @@
 
     function renderHistory() {
       if (!recentOutputs.length) {
-        savedList.innerHTML = '<p class="muted empty-note">No encrypted files yet.</p>';
+        savedList.innerHTML = '<p class="muted empty-note">No output files yet.</p>';
         return;
       }
 
@@ -1143,11 +1355,51 @@
           <button class="history-item text-left" onclick="downloadFromHistory(${index})">
             <p class="text-sm font-medium mt-0.5" style="color: var(--cyan);">${escapeHtml(file.name)}</p>
             <p class="text-xs mt-1 truncate-two" style="color: #ffffff;">From: ${escapeHtml(file.inputName)}</p>
-            <p class="text-xs mt-1 truncate-two" style="color: var(--text-1);">Algo: ${escapeHtml(file.algorithm)}</p>
+            <p class="text-xs mt-1 truncate-two" style="color: var(--text-1);">${escapeHtml(file.mode === "decrypt" ? "Mode: Decrypt" : "Mode: Encrypt")} | Algo: ${escapeHtml(file.algorithm)}</p>
             <p class="text-[0.68rem] uppercase tracking-[0.08em] mt-2" style="color: var(--magenta);">${escapeHtml(file.time)}</p>
           </button>
         `)
         .join("");
+    }
+
+    function setEncryptorMode(mode) {
+      currentMode = mode === "decrypt" ? "decrypt" : "encrypt";
+      localStorage.setItem(ENCRYPTOR_MODE_STORAGE_KEY, currentMode);
+
+      const isDecrypt = currentMode === "decrypt";
+      modeEncryptBtn.classList.toggle("is-active", !isDecrypt);
+      modeDecryptBtn.classList.toggle("is-active", isDecrypt);
+
+      algoSelect.classList.toggle("hidden", isDecrypt);
+      keyFileInput.classList.toggle("hidden", !isDecrypt);
+      pickKeyBtn.classList.toggle("hidden", !isDecrypt);
+
+      fileInput.value = "";
+      keyFileInput.value = "";
+
+      if (isDecrypt) {
+        sidebarTitle.textContent = "Decrypt with key package";
+        sidebarCopy.textContent = "Switch to decrypt mode, choose the encrypted file plus its .key.json package, then recover the original file.";
+        mainTitle.textContent = "EncryptCHAD™ File Decryptor";
+        mainCopy.textContent = "Drop in an encrypted file and matching key package to decrypt and download the original file.";
+        threadIntroTitle.textContent = "Decrypt mode is active. Pick encrypted file + key package, then click decrypt.";
+        threadIntroCopy.textContent = "Decrypted outputs appear here and in the 'Recent outputs' panel.";
+        runBtnLabel.textContent = "Decrypt";
+        runBtnIcon.setAttribute("data-lucide", "unlock");
+        fileInput.setAttribute("accept", ".enc,application/octet-stream,*/*");
+      } else {
+        sidebarTitle.textContent = "Encrypt files in one click";
+        sidebarCopy.textContent = "Upload any file and encrypt it instantly in-browser. You get an encrypted file and a decryption key package.";
+        mainTitle.textContent = "EncryptCHAD™ File Encryptor";
+        mainCopy.textContent = "Drop in any file, encrypt it, and download the encrypted output with key package.";
+        threadIntroTitle.textContent = "Use the input bar below to upload a file, then click encrypt.";
+        threadIntroCopy.textContent = "Encrypted outputs and key packages appear here and in the 'Recent outputs' panel.";
+        runBtnLabel.textContent = "Encrypt";
+        runBtnIcon.setAttribute("data-lucide", "lock");
+        fileInput.removeAttribute("accept");
+      }
+
+      lucide.createIcons();
     }
 
     function downloadFromHistory(index) {
