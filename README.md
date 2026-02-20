@@ -21,3 +21,6 @@ Single-server package that combines:
   - `POST /api/extract`
   - `GET /api/download`
 - Navigation between all three tools is done through the 3 PNG sidebar buttons on each page.
+- `npm install` runs a postinstall script that downloads `yt-dlp` into `./bin`.
+  - Set `SKIP_YTDLP_DOWNLOAD=1` to skip this behavior.
+  - Set `YTDLP_PATH` if you want to force a custom `yt-dlp` binary path.

@@ -6,7 +6,12 @@ const { spawn, spawnSync } = require("child_process");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const YTDLP_PATH = process.env.YTDLP_PATH || "yt-dlp";
+const LOCAL_YTDLP_PATH = path.join(
+  __dirname,
+  "bin",
+  process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp"
+);
+const YTDLP_PATH = process.env.YTDLP_PATH || LOCAL_YTDLP_PATH;
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS || 120000);
 const YTDLP = resolveYtDlpCommand();
 const HAS_FFMPEG = isCommandAvailable("ffmpeg", ["-version"]);
@@ -434,6 +439,7 @@ function resolveYtDlpCommand() {
   const pyLauncher = path.join(winDir, "py.exe");
   const candidates = [
     { command: YTDLP_PATH, prefixArgs: [], label: `YTDLP_PATH (${YTDLP_PATH})` },
+    { command: LOCAL_YTDLP_PATH, prefixArgs: [], label: `local yt-dlp (${LOCAL_YTDLP_PATH})` },
     { command: "yt-dlp", prefixArgs: [], label: "yt-dlp" },
     { command: pyLauncher, prefixArgs: ["-m", "yt_dlp"], label: `${pyLauncher} -m yt_dlp` },
     { command: "py", prefixArgs: ["-m", "yt_dlp"], label: "py -m yt_dlp" },
