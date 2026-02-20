@@ -1,0 +1,1197 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENCRYPTCHAD™ // BETA[ALPHA] v1.0</title>
+  <link rel="icon" type="image/png" href="./assets/icons/favicon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-0: #07120d;
+      --bg-1: #030a07;
+      --panel: rgba(3, 16, 10, 0.82);
+      --panel-2: rgba(7, 30, 20, 0.72);
+      --line: rgba(68, 255, 129, 0.24);
+      --line-strong: rgba(107, 255, 157, 0.48);
+      --text-0: #d8ffe8;
+      --text-1: #91d7ad;
+      --accent-a: #00ff73;
+      --accent-b: #00e9ff;
+      --cyan: #22fff3;
+      --magenta: #ff2ec9;
+      --red: #ff5a5a;
+      --bubble: linear-gradient(120deg, #0aa556 0%, #00ce68 55%, #3dffae 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    html.invert-mode {
+      filter: invert(1) hue-rotate(180deg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: "Share Tech Mono", monospace;
+      color: var(--text-0);
+      background:
+        radial-gradient(800px 500px at 70% 20%, rgba(0, 255, 102, 0.09), transparent 64%),
+        radial-gradient(880px 520px at 20% 90%, rgba(0, 255, 200, 0.07), transparent 64%),
+        linear-gradient(180deg, #07120d 0%, #050d09 32%, #020705 100%);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      isolation: isolate;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(100, 255, 160, 0.04) 0px,
+          rgba(100, 255, 160, 0.04) 1px,
+          transparent 1px,
+          transparent 3px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(100, 255, 160, 0.03) 0px,
+          rgba(100, 255, 160, 0.03) 1px,
+          transparent 1px,
+          transparent 14px
+      );
+      opacity: 0.36;
+      z-index: 0;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: -20%;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(0, 255, 136, 0.12) 0px,
+          rgba(0, 255, 136, 0.12) 2px,
+          transparent 2px,
+          transparent 22px
+        );
+      filter: blur(0.2px);
+      opacity: 0.08;
+      animation: matrixDrift 9s linear infinite;
+      z-index: 0;
+    }
+
+    .shell {
+      width: min(80vw, 1600px);
+      height: min(80dvh, 980px);
+      margin: auto;
+      padding: 0;
+      display: grid;
+      grid-template-columns: clamp(280px, 22vw, 360px) 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 0;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #0b0b0c 0%, #080809 50%, #060607 100%);
+      border: 1px solid var(--line-strong);
+      box-shadow:
+        0 0 20px rgba(0, 255, 128, 0.25),
+        0 0 56px rgba(0, 255, 128, 0.14),
+        0 24px 44px rgba(0, 0, 0, 0.5);
+      backdrop-filter: none;
+      position: relative;
+      z-index: 2;
+      transform-style: flat;
+      will-change: transform;
+      animation: shellWobble 6.2s ease-in-out infinite;
+    }
+
+    .shell::before {
+      content: none;
+    }
+
+    .sidebar {
+      border-radius: 0 0 0 18px;
+      padding: 1rem;
+      background: linear-gradient(180deg, #0d0d0f 0%, #09090b 52%, #070709 100%);
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      min-height: 0;
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .sidebar-link-grid {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 0.35rem;
+      min-height: 88px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.35rem;
+      overflow: hidden;
+    }
+
+    .sidebar-link-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 0;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+
+    .sidebar-link-btn:hover {
+      border-color: var(--line-strong);
+      transform: translateY(-1px);
+    }
+
+    .sidebar-link-btn:focus-visible {
+      outline: 2px solid var(--line-strong);
+      outline-offset: 2px;
+    }
+
+    .sidebar-link-btn.is-selected {
+      border-color: #00e9ff;
+      box-shadow:
+        inset 0 0 0 2px rgba(0, 233, 255, 0.45),
+        0 0 14px rgba(0, 233, 255, 0.45);
+      background: linear-gradient(180deg, rgba(0, 233, 255, 0.16) 0%, rgba(0, 0, 0, 0.38) 100%);
+    }
+
+    .sidebar-link-img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      image-rendering: pixelated;
+      opacity: 0.94;
+      filter: contrast(1.05);
+    }
+
+    .sidebar-link-img.is-grayscale {
+      filter: grayscale(1) contrast(1.05);
+    }
+
+    html.invert-mode .sidebar-link-img.no-invert-img {
+      filter: invert(1) hue-rotate(180deg) contrast(1.05);
+    }
+
+    html.invert-mode .sidebar-link-img.no-invert-img.is-grayscale {
+      filter: invert(1) hue-rotate(180deg) grayscale(1) contrast(1.05);
+    }
+
+    .crt-ticker {
+      height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(0, 255, 136, 0.12) 0%, rgba(0, 0, 0, 0.55) 100%);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      box-shadow: inset 0 0 18px rgba(0, 255, 136, 0.08);
+    }
+
+    .crt-ticker::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.04) 0,
+        rgba(255, 255, 255, 0.04) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      opacity: 0.35;
+    }
+
+    .crt-ticker-track {
+      white-space: nowrap;
+      display: flex;
+      width: max-content;
+      gap: 0;
+      color: #ff003c;
+      text-shadow:
+        0 0 4px rgba(255, 0, 60, 0.55),
+        0 0 8px rgba(255, 0, 60, 0.45),
+        0 0 14px rgba(255, 0, 60, 0.3);
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding-left: 0;
+      animation: tickerScroll 22s linear infinite;
+      will-change: transform;
+    }
+
+    .crt-ticker-track span {
+      flex: 0 0 auto;
+      display: inline-block;
+      padding-right: 3rem;
+    }
+
+
+    .brand {
+      display: block;
+      padding-bottom: 0.7rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-mark {
+      width: 100%;
+    }
+
+    .ascii-logo-img {
+      display: block;
+      width: 100%;
+      height: 64px;
+      margin-top: 8px;
+      max-height: none;
+      object-fit: cover;
+      object-position: left center;
+      image-rendering: auto;
+    }
+
+    .sidebar-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-2);
+      padding: 0.8rem;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: rgba(0, 255, 136, 0.07);
+      color: var(--text-1);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      padding: 0.35rem 0.7rem;
+      transition: 180ms ease;
+    }
+
+    .chip:hover {
+      border-color: rgba(0, 255, 136, 0.72);
+      color: var(--text-0);
+      transform: translateY(-1px);
+    }
+
+    select.chip {
+      color: var(--text-0);
+      background: rgba(0, 255, 136, 0.12);
+    }
+
+    select.chip option {
+      color: #260b12;
+      background: #ffd7e3;
+    }
+
+    select.chip option:checked {
+      color: #ffffff;
+      background: #c1123f;
+    }
+
+    .main {
+      border-radius: 0 0 18px 0;
+      border-left: 1px solid var(--line);
+      background: linear-gradient(180deg, #0d0d0f 0%, #09090b 55%, #070709 100%);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .window-chrome {
+      grid-column: 1 / -1;
+      height: 42px;
+      border-bottom: 1px solid var(--line);
+      border-radius: 18px 18px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 0.9rem;
+      background: #000000;
+    }
+
+    .chrome-dots {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .chrome-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .dot-red { color: #ff5f57; background: #ff5f57; }
+    .dot-amber { color: #febc2e; background: #febc2e; }
+    .dot-green { color: #28c840; background: #28c840; }
+
+    .mode-toggle-dot {
+      position: relative;
+      border: 0;
+      padding: 0;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .chrome-link-dot {
+      position: relative;
+      display: inline-block;
+      border: 0;
+      padding: 0;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .chrome-link-dot::before {
+      content: attr(data-icon);
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 8px;
+      line-height: 1;
+      color: #101010;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 120ms ease, transform 120ms ease;
+      pointer-events: none;
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.35);
+    }
+
+    .chrome-link-dot:hover::before,
+    .chrome-link-dot:focus-visible::before {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .mode-toggle-dot::before {
+      content: "\2600";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 8px;
+      line-height: 1;
+      color: #ff2ec9;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 120ms ease, transform 120ms ease;
+      text-shadow: 0 0 3px rgba(255, 46, 201, 0.55);
+      pointer-events: none;
+    }
+
+    .mode-toggle-dot:hover::before,
+    .mode-toggle-dot:focus-visible::before {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .chrome-title {
+      font-size: 0.88rem;
+      letter-spacing: 0.04em;
+      color: var(--text-1);
+      text-shadow: 0 0 8px rgba(70, 255, 134, 0.28);
+    }
+
+    .topbar {
+      padding: 0.95rem 1rem;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .ghost-btn {
+      border: 1px solid var(--accent-a);
+      background: transparent;
+      color: #ffffff;
+      border-radius: 10px;
+      padding: 0.48rem 0.72rem;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: 180ms ease;
+      text-shadow: 0 0 8px rgba(34, 255, 243, 0.26);
+      box-shadow: 0 0 0 1px rgba(34, 255, 243, 0.2), inset 0 0 8px rgba(34, 255, 243, 0.09);
+    }
+
+    .ghost-btn:hover {
+      border-color: var(--accent-a);
+      background: rgba(255, 255, 255, 0.04);
+      color: #ffffff;
+    }
+
+    .ghost-btn svg,
+    .ghost-btn i {
+      color: #ff2ec9 !important;
+      filter: drop-shadow(0 0 4px rgba(255, 46, 201, 0.45));
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 255, 136, 0.95) transparent;
+    }
+
+    *::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+      background: transparent;
+    }
+
+    *::-webkit-scrollbar-track {
+      border: 1px solid rgba(0, 255, 136, 0.35);
+      border-radius: 999px;
+      background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      border: 2px solid rgba(0, 255, 136, 0.95);
+      border-radius: 999px;
+      background: transparent !important;
+      background-color: transparent !important;
+      background-clip: padding-box;
+      box-shadow: none;
+    }
+
+    *::-webkit-scrollbar-button {
+      width: 0;
+      height: 0;
+      display: none;
+      background: transparent;
+    }
+
+    .thread {
+      overflow: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .msg {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 16px;
+      padding: 0.9rem 1rem;
+      line-height: 1.45;
+      animation: riseIn 220ms ease both;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: none;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      will-change: border-color, outline-color;
+    }
+
+    .msg-user {
+      width: auto;
+      max-width: min(78%, 980px);
+      margin-left: auto;
+      background: rgba(180, 255, 205, 0.15);
+      color: #ffffff;
+      border-top-right-radius: 6px;
+      box-shadow: 0 0 14px rgba(190, 255, 220, 0.14);
+    }
+
+    .msg-user,
+    .msg-user * {
+      color: #ffffff !important;
+    }
+
+    .msg-ai {
+      background: rgba(0, 255, 136, 0.07);
+      color: var(--cyan);
+      border-top-left-radius: 6px;
+    }
+
+    .msg-selected {
+      border: 1px solid rgba(255, 46, 201, 0.75) !important;
+      outline: 1px solid rgba(255, 46, 201, 0.2);
+      outline-offset: 0;
+      box-shadow: none;
+    }
+
+    .idea-grid {
+      margin-top: 0.65rem;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
+    .idea-pill {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.5rem;
+      background: rgba(0, 255, 136, 0.05);
+      font-size: 0.8rem;
+      color: #ffffff;
+    }
+
+    .idea-pill strong {
+      display: block;
+      margin-bottom: 0.2rem;
+      color: var(--cyan);
+      font-size: 0.73rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .composer {
+      padding: 0.9rem 1rem 1rem;
+      border-top: 1px solid var(--line);
+      background: rgba(1, 14, 8, 0.68);
+    }
+
+    .composer-wrap {
+      border: 1px solid var(--line-strong);
+      background: rgba(0, 255, 136, 0.06);
+      border-radius: 14px;
+      padding: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .composer-search-icon {
+      margin-left: 0.2rem;
+    }
+
+    .composer-wrap input {
+      flex: 1;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text-0);
+      font-family: "Share Tech Mono", monospace;
+      font-size: 1rem;
+      padding: 0.55rem 0.45rem;
+    }
+
+    .composer-wrap input::placeholder {
+      color: #ffffff;
+    }
+
+    .send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid #ff003c !important;
+      background: linear-gradient(140deg, rgba(255, 46, 99, 0.16) 0%, rgba(255, 0, 60, 0.26) 100%) !important;
+      color: #ffe7ef !important;
+      display: grid;
+      place-items: center;
+      transition: 180ms ease;
+      box-shadow:
+        inset 0 0 8px rgba(120, 0, 30, 0.22),
+        0 0 4px rgba(255, 0, 60, 0.45),
+        0 0 8px rgba(255, 0, 60, 0.35),
+        0 0 14px rgba(255, 0, 60, 0.2) !important;
+    }
+
+    .send-btn svg,
+    .send-btn i {
+      color: #ffe7ef !important;
+      stroke: currentColor !important;
+    }
+
+    .send-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    .mini-history {
+      overflow: auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .history-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.58rem;
+      background: rgba(0, 255, 136, 0.04);
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .history-item:hover {
+      border-color: rgba(0, 255, 136, 0.8);
+      transform: translateY(-1px);
+    }
+
+    .truncate-two {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .muted {
+      color: #ffffff;
+      font-size: 0.8rem;
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes shellWobble {
+      0% { transform: rotate(-0.35deg) translateY(-1px); }
+      50% { transform: rotate(0.35deg) translateY(1px); }
+      100% { transform: rotate(-0.35deg) translateY(-1px); }
+    }
+
+    @keyframes matrixDrift {
+      from { transform: translateY(-12%); }
+      to { transform: translateY(12%); }
+    }
+
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .text-slate-100,
+    .text-slate-200,
+    .text-slate-400,
+    .text-slate-500 {
+      color: var(--text-1) !important;
+    }
+
+    .font-medium,
+    .font-semibold {
+      text-shadow: 0 0 8px rgba(70, 255, 134, 0.28);
+    }
+
+    .msg-ai p {
+      color: #ffffff;
+    }
+
+    .msg-ai p.font-semibold,
+    .msg-ai p.font-medium,
+    .msg-ai .idea-pill strong {
+      color: var(--cyan);
+    }
+
+    .msg-ai .muted {
+      color: #ffffff !important;
+      text-shadow: none;
+    }
+
+    .msg-user {
+      color: #ffffff;
+    }
+
+    #saved-list .muted {
+      color: #ffffff;
+      text-shadow: none;
+    }
+
+    .saved-heading {
+      color: #ffe35a !important;
+    }
+
+    .idea-note {
+      color: #ffe35a !important;
+      text-shadow: 0 0 8px rgba(255, 227, 90, 0.26);
+    }
+
+    .msg-ai .idea-note {
+      color: #ffe35a !important;
+      text-shadow: 0 0 8px rgba(255, 227, 90, 0.26);
+    }
+
+    .empty-note {
+      color: #ffffff !important;
+      text-shadow: none;
+    }
+
+    #toast {
+      color: var(--magenta) !important;
+      background: #000000 !important;
+      border-color: rgba(0, 255, 136, 0.65) !important;
+      box-shadow: 0 0 18px rgba(0, 255, 136, 0.24);
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: auto;
+        display: block;
+      }
+
+      .shell {
+        width: 100%;
+        height: auto;
+        min-height: 100dvh;
+        margin: 0;
+        padding: 0;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        border-radius: 0;
+        animation: none;
+      }
+
+      .sidebar {
+        order: 2;
+        border-right: none;
+        border-top: 1px solid var(--line);
+        border-radius: 0;
+      }
+
+      .main {
+        order: 1;
+        min-height: 70vh;
+        border-left: none;
+        border-radius: 0;
+      }
+
+      .idea-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar-bottom {
+        margin-top: 0.3rem;
+      }
+
+      .sidebar-link-grid {
+        min-height: 74px;
+      }
+
+      .crt-ticker {
+        height: 46px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .shell,
+      body::after {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="window-chrome">
+      <div class="chrome-dots">
+        <button id="mode-toggle-btn" class="chrome-dot dot-red mode-toggle-dot" type="button" aria-label="Toggle light mode" aria-pressed="false"></button>
+        <a class="chrome-dot dot-amber chrome-link-dot" data-icon="X" href="https://www.x.com/c0gnate" target="_blank" rel="noopener noreferrer" aria-label="Open X profile"></a>
+        <a class="chrome-dot dot-green chrome-link-dot" data-icon="T" href="https://t.me/turboretard" target="_blank" rel="noopener noreferrer" aria-label="Open Telegram profile"></a>
+      </div>
+      <div class="chrome-title">retard@encryptchad:~</div>
+      <div></div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">
+          <p class="text-[0.65rem] tracking-[0.14em] text-slate-400 uppercase">BETA(ALPHA) v1.0</p>
+          <img class="ascii-logo-img" src="./assets/images/ascii-art-text1.png" alt="VibeCHAD ASCII logo" />
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <p class="text-sm text-slate-200 font-medium">Encrypt files in one click</p>
+        <p class="muted mt-1">Upload any file and encrypt it instantly in-browser. You get an encrypted file and a decryption key package.</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button class="chip" onclick="setTargetAlgo('aes-256-gcm')">AES-256-GCM</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-1">
+        <p class="text-sm font-medium text-slate-200 saved-heading">Recent outputs</p>
+        <button class="ghost-btn text-xs px-2 py-1" onclick="clearHistory()">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          Clear
+        </button>
+      </div>
+
+      <div id="saved-list" class="mini-history custom-scroll">
+        <p class="muted empty-note">No encrypted files yet.</p>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="sidebar-link-grid">
+          <button class="sidebar-link-btn" type="button" aria-label="Pirate Chad button" onclick="window.location.href='./pirate_chad_v1.html'">
+            <img class="sidebar-link-img no-invert-img is-grayscale" src="./assets/images/pirate-chad.png" alt="Pirate Chad" />
+          </button>
+          <button class="sidebar-link-btn" type="button" aria-label="Wizard Chad button" onclick="window.location.href='./wizard_chad_v1.html'">
+            <img class="sidebar-link-img no-invert-img is-grayscale" src="./assets/images/wizard-chad.png" alt="Wizard Chad" />
+          </button>
+          <button class="sidebar-link-btn is-selected" type="button" aria-label="Green Chad button" aria-current="page">
+            <img class="sidebar-link-img no-invert-img" src="./assets/images/green-chad.png" alt="Green Chad" />
+          </button>
+        </div>
+        <div class="crt-ticker" aria-hidden="true">
+          <div class="crt-ticker-track">
+            <span>UPLOAD // ENCRYPT // COPY KEY // DOWNLOAD // REPEAT // SHIP FASTER //</span>
+            <span>UPLOAD // ENCRYPT // COPY KEY // DOWNLOAD // REPEAT // SHIP FASTER //</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <section class="main">
+      <div class="topbar">
+        <div>
+          <p class="font-medium tracking-[0.16em]">EncryptCHAD™ File Encryptor</p>
+          <p class="text-sm text-slate-200">Drop in any file, encrypt it, and download the encrypted output with key package.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="ghost-btn" onclick="triggerFilePicker()">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            Pick File
+          </button>
+          <button class="ghost-btn" onclick="encryptNow()">
+            <i data-lucide="lock" class="w-4 h-4"></i>
+            Encrypt
+          </button>
+          <button class="ghost-btn" onclick="downloadLatest()">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Download
+          </button>
+        </div>
+      </div>
+
+      <div id="thread" class="thread custom-scroll">
+        <div class="msg msg-ai">
+          <p class="font-medium" style="color: #00e9ff;">Use the input bar below to upload a file, then click encrypt.</p>
+          <p class="muted mt-1">Encrypted outputs and key packages appear here and in the 'Recent outputs' panel.</p>
+        </div>
+      </div>
+
+      <div class="composer">
+        <form id="encryptor-form" class="composer-wrap">
+          <i data-lucide="paperclip" class="w-4 h-4 text-slate-400 composer-search-icon"></i>
+          <input id="file-input" type="file" />
+          <select id="algo-select" class="chip" aria-label="Select encryption algorithm">
+            <option value="aes-256-gcm">AES-256-GCM</option>
+          </select>
+          <button type="submit" class="send-btn" aria-label="Encrypt file">
+            <i data-lucide="arrow-up" class="w-4 h-4"></i>
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="fixed bottom-5 right-5 rounded-xl border border-white/20 bg-slate-900/90 px-4 py-2 text-sm text-slate-100 opacity-0 translate-y-3 transition-all duration-300 pointer-events-none"></div>
+
+  <script>
+    const thread = document.getElementById("thread");
+    const fileInput = document.getElementById("file-input");
+    const algoSelect = document.getElementById("algo-select");
+    const encryptorForm = document.getElementById("encryptor-form");
+    const savedList = document.getElementById("saved-list");
+    const toast = document.getElementById("toast");
+    const modeToggleBtn = document.getElementById("mode-toggle-btn");
+
+    const MODE_STORAGE_KEY = "vibechad_invert_mode";
+    const recentOutputs = [];
+    let latestOutput = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+
+      const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
+      const shouldInvert = savedMode === "1";
+      document.documentElement.classList.toggle("invert-mode", shouldInvert);
+      modeToggleBtn.setAttribute("aria-pressed", shouldInvert ? "true" : "false");
+
+      modeToggleBtn.addEventListener("click", () => {
+        document.documentElement.classList.toggle("invert-mode");
+        const isOn = document.documentElement.classList.contains("invert-mode");
+        modeToggleBtn.setAttribute("aria-pressed", isOn ? "true" : "false");
+        localStorage.setItem(MODE_STORAGE_KEY, isOn ? "1" : "0");
+      });
+
+      encryptorForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await encryptNow();
+      });
+    });
+
+    function triggerFilePicker() {
+      fileInput.click();
+    }
+
+    function setTargetAlgo(algorithm) {
+      algoSelect.value = algorithm;
+      showToast(`Algorithm set to ${algorithm.toUpperCase()}.`);
+    }
+
+    function clearHistory() {
+      recentOutputs.forEach((item) => {
+        URL.revokeObjectURL(item.url);
+        URL.revokeObjectURL(item.keyUrl);
+      });
+      recentOutputs.length = 0;
+      latestOutput = null;
+      renderHistory();
+      showToast("History cleared.");
+    }
+
+    function downloadLatest() {
+      if (!latestOutput) {
+        showToast("No encrypted file yet.");
+        return;
+      }
+
+      downloadFile(latestOutput.url, latestOutput.name);
+      showToast("Downloaded latest encrypted file.");
+    }
+
+    async function encryptNow() {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        showToast("Pick a file first.");
+        return;
+      }
+
+      const algorithm = algoSelect.value;
+      appendUserMessage(`${file.name} -> ${algorithm.toUpperCase()}`);
+
+      try {
+        const result = await encryptFile(file, algorithm);
+        const outputUrl = URL.createObjectURL(result.blob);
+        const keyUrl = URL.createObjectURL(result.keyBlob);
+        const record = {
+          name: result.name,
+          inputName: file.name,
+          algorithm: result.algorithm,
+          note: result.note,
+          url: outputUrl,
+          keyUrl,
+          keyPackage: result.keyPackage,
+          keyFileName: result.keyFileName,
+          time: new Date().toLocaleTimeString()
+        };
+
+        latestOutput = record;
+        recentOutputs.unshift(record);
+        if (recentOutputs.length > 25) {
+          const dropped = recentOutputs.pop();
+          URL.revokeObjectURL(dropped.url);
+          URL.revokeObjectURL(dropped.keyUrl);
+        }
+
+        appendOutputMessage(record);
+        renderHistory();
+        showToast("File encrypted.");
+      } catch (error) {
+        showToast(`Encrypt failed: ${error.message}`);
+      }
+    }
+
+    async function encryptFile(file, algorithm) {
+      if (algorithm !== "aes-256-gcm") {
+        throw new Error("Unsupported algorithm.");
+      }
+
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const rawKey = crypto.getRandomValues(new Uint8Array(32));
+      const key = await crypto.subtle.importKey("raw", rawKey, { name: "AES-GCM" }, false, ["encrypt"]);
+
+      const plaintext = await file.arrayBuffer();
+      const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+      const payload = concatUint8(
+        new Uint8Array([87, 67, 72, 49]), // WCH1 header
+        iv,
+        new Uint8Array(encrypted)
+      );
+
+      const outputName = `${file.name}.enc`;
+      const keyPackageObj = {
+        version: 1,
+        algorithm: "AES-256-GCM",
+        key: bytesToBase64(rawKey),
+        iv: bytesToBase64(iv),
+        originalFile: file.name,
+        encryptedFile: outputName,
+        generatedAt: new Date().toISOString()
+      };
+      const keyPackage = JSON.stringify(keyPackageObj, null, 2);
+      const keyFileName = `${stripExtension(file.name)}.key.json`;
+
+      return {
+        blob: new Blob([payload], { type: "application/octet-stream" }),
+        keyBlob: new Blob([keyPackage], { type: "application/json" }),
+        name: outputName,
+        keyFileName,
+        keyPackage,
+        algorithm: "AES-256-GCM",
+        note: "Encrypted in-browser using AES-GCM. Keep the key package safe."
+      };
+    }
+
+    function concatUint8(...arrays) {
+      const total = arrays.reduce((sum, arr) => sum + arr.length, 0);
+      const out = new Uint8Array(total);
+      let offset = 0;
+      arrays.forEach((arr) => {
+        out.set(arr, offset);
+        offset += arr.length;
+      });
+      return out;
+    }
+
+    function bytesToBase64(bytes) {
+      let binary = "";
+      for (let i = 0; i < bytes.length; i += 1) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function appendUserMessage(text) {
+      const user = document.createElement("div");
+      user.className = "msg msg-user";
+      user.textContent = text;
+      thread.appendChild(user);
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function appendOutputMessage(record) {
+      const msg = document.createElement("div");
+      msg.className = "msg msg-ai";
+      msg.innerHTML = `
+        <p class="font-semibold text-lg">Encrypted: ${escapeHtml(record.name)}</p>
+        <p class="mt-1">Source: ${escapeHtml(record.inputName)} | Algorithm: ${escapeHtml(record.algorithm)}</p>
+        <p class="muted mt-2 idea-note">${escapeHtml(record.note)}</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <a class="ghost-btn" href="${record.url}" download="${escapeHtml(record.name)}">Download file</a>
+          <a class="ghost-btn" href="${record.keyUrl}" download="${escapeHtml(record.keyFileName)}">Download key</a>
+        </div>
+        <p class="mt-3 text-xs uppercase tracking-[0.08em]" style="color: var(--magenta);">Key package</p>
+        <pre class="mt-1 p-2 rounded-lg border border-white/20 bg-black/40 text-xs whitespace-pre-wrap break-all">${escapeHtml(record.keyPackage)}</pre>
+        <button type="button" class="ghost-btn mt-2 copy-key-btn">Copy key package</button>
+      `;
+
+      thread.appendChild(msg);
+      const copyBtn = msg.querySelector(".copy-key-btn");
+      copyBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(record.keyPackage);
+          showToast("Key package copied.");
+        } catch {
+          showToast("Could not copy key package.");
+        }
+      });
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function renderHistory() {
+      if (!recentOutputs.length) {
+        savedList.innerHTML = '<p class="muted empty-note">No encrypted files yet.</p>';
+        return;
+      }
+
+      savedList.innerHTML = recentOutputs
+        .map((file, index) => `
+          <button class="history-item text-left" onclick="downloadFromHistory(${index})">
+            <p class="text-sm font-medium mt-0.5" style="color: var(--cyan);">${escapeHtml(file.name)}</p>
+            <p class="text-xs mt-1 truncate-two" style="color: #ffffff;">From: ${escapeHtml(file.inputName)}</p>
+            <p class="text-xs mt-1 truncate-two" style="color: var(--text-1);">Algo: ${escapeHtml(file.algorithm)}</p>
+            <p class="text-[0.68rem] uppercase tracking-[0.08em] mt-2" style="color: var(--magenta);">${escapeHtml(file.time)}</p>
+          </button>
+        `)
+        .join("");
+    }
+
+    function downloadFromHistory(index) {
+      const item = recentOutputs[index];
+      if (!item) return;
+      downloadFile(item.url, item.name);
+      showToast("Downloaded from history.");
+    }
+
+    function downloadFile(url, name) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function stripExtension(filename) {
+      const index = filename.lastIndexOf(".");
+      return index > 0 ? filename.slice(0, index) : filename;
+    }
+
+    function getExtension(filename) {
+      const index = filename.lastIndexOf(".");
+      return index > -1 ? filename.slice(index + 1).toLowerCase() : "";
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.remove("opacity-0", "translate-y-3");
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-3");
+      }, 1700);
+    }
+
+    function escapeHtml(input) {
+      const div = document.createElement("div");
+      div.textContent = String(input);
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
+
+
+
