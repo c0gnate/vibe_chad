@@ -876,8 +876,8 @@
         </div>
         <div class="crt-ticker" aria-hidden="true">
           <div class="crt-ticker-track">
-            <span>UPLOAD // ENCRYPT // COPY KEY // DOWNLOAD // REPEAT // SHIP FASTER //</span>
-            <span>UPLOAD // ENCRYPT // COPY KEY // DOWNLOAD // REPEAT // SHIP FASTER //</span>
+            <span>WE WILL TAKE ANTARCTICA WITH ZERO RESISTANCE AND BUILD THE NEW WORLD IN THE SUB-TERRIAN CLIMATE UNDER THE ICE</span>
+            <span>WE WILL TAKE ANTARCTICA WITH ZERO RESISTANCE AND BUILD THE NEW WORLD IN THE SUB-TERRIAN CLIMATE UNDER THE ICE</span>
           </div>
         </div>
       </div>
@@ -950,6 +950,7 @@
     const modeToggleBtn = document.getElementById("mode-toggle-btn");
 
     const MODE_STORAGE_KEY = "vibechad_invert_mode";
+    const WIZARD_HISTORY_STORAGE_KEY = "vibechad_wizard_history_v1";
     const recentOutputs = [];
     let latestOutput = null;
 
@@ -986,6 +987,9 @@
         localStorage.setItem(MODE_STORAGE_KEY, isOn ? "1" : "0");
       });
 
+      hydrateHistory();
+      renderHistory();
+
       converterForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         await convertNow();
@@ -1005,6 +1009,7 @@
       recentOutputs.forEach((item) => URL.revokeObjectURL(item.url));
       recentOutputs.length = 0;
       latestOutput = null;
+      persistHistory();
       renderHistory();
       showToast("History cleared.");
     }
@@ -1031,12 +1036,14 @@
 
       try {
         const result = await convertFile(file, targetExt);
+        const outputDataUrl = await blobToDataUrl(result.blob);
         const outputUrl = URL.createObjectURL(result.blob);
         const record = {
           name: result.name,
           inputName: file.name,
           targetExt,
           note: result.note,
+          dataUrl: outputDataUrl,
           url: outputUrl,
           time: new Date().toLocaleTimeString()
         };
@@ -1048,6 +1055,7 @@
           URL.revokeObjectURL(dropped.url);
         }
 
+        persistHistory();
         appendOutputMessage(record);
         renderHistory();
         showToast("File converted.");
@@ -1228,8 +1236,60 @@
     function downloadFromHistory(index) {
       const item = recentOutputs[index];
       if (!item) return;
+      if (!item.url && item.dataUrl) {
+        item.url = URL.createObjectURL(dataUrlToBlob(item.dataUrl));
+      }
+      if (!item.url) {
+        showToast("File data missing.");
+        return;
+      }
       downloadFile(item.url, item.name);
       showToast("Downloaded from history.");
+    }
+
+    function persistHistory() {
+      try {
+        const serializable = recentOutputs.slice(0, 25).map((item) => ({
+          name: item.name,
+          inputName: item.inputName,
+          targetExt: item.targetExt,
+          note: item.note,
+          dataUrl: item.dataUrl,
+          time: item.time
+        }));
+        localStorage.setItem(WIZARD_HISTORY_STORAGE_KEY, JSON.stringify(serializable));
+      } catch {
+      }
+    }
+
+    function hydrateHistory() {
+      try {
+        const raw = localStorage.getItem(WIZARD_HISTORY_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return;
+
+        recentOutputs.length = 0;
+        parsed.slice(0, 25).forEach((item) => {
+          if (!item || typeof item !== "object") return;
+          const dataUrl = String(item.dataUrl || "");
+          const name = String(item.name || "").trim();
+          if (!dataUrl || !name) return;
+          const blob = dataUrlToBlob(dataUrl);
+          const url = URL.createObjectURL(blob);
+          recentOutputs.push({
+            name,
+            inputName: String(item.inputName || "unknown"),
+            targetExt: String(item.targetExt || ""),
+            note: String(item.note || ""),
+            dataUrl,
+            url,
+            time: String(item.time || "")
+          });
+        });
+        latestOutput = recentOutputs[0] || null;
+      } catch {
+      }
     }
 
     function downloadFile(url, name) {
@@ -1239,6 +1299,27 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Could not encode file data."));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function dataUrlToBlob(dataUrl) {
+      const [meta, base64] = String(dataUrl).split(",");
+      const mimeMatch = /^data:([^;]+);base64$/i.exec(meta || "");
+      const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+      const binary = atob(base64 || "");
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new Blob([bytes], { type: mime });
     }
 
     function stripExtension(filename) {

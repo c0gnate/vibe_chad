@@ -643,6 +643,23 @@
       color: #ffffff;
     }
 
+    #key-file-input {
+      flex: 0 0 auto;
+      width: 148px;
+      color: transparent;
+    }
+
+    #key-file-input::file-selector-button {
+      color: var(--text-0);
+      font-family: "Share Tech Mono", monospace;
+    }
+
+    .key-file-state {
+      color: var(--text-1);
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
     .send-btn {
       width: 38px;
       height: 38px;
@@ -905,8 +922,8 @@
         </div>
         <div class="crt-ticker" aria-hidden="true">
           <div class="crt-ticker-track">
-            <span>UPLOAD // ENCRYPT // COPY KEY // DOWNLOAD // REPEAT // SHIP FASTER //</span>
-            <span>UPLOAD // ENCRYPT // COPY KEY // DOWNLOAD // REPEAT // SHIP FASTER //</span>
+            <span>WE WILL TAKE ANTARCTICA WITH ZERO RESISTANCE AND BUILD THE NEW WORLD IN THE SUB-TERRIAN CLIMATE UNDER THE ICE</span>
+            <span>WE WILL TAKE ANTARCTICA WITH ZERO RESISTANCE AND BUILD THE NEW WORLD IN THE SUB-TERRIAN CLIMATE UNDER THE ICE</span>
           </div>
         </div>
       </div>
@@ -926,11 +943,11 @@
           </div>
           <button class="ghost-btn" onclick="triggerFilePicker()">
             <i data-lucide="upload" class="w-4 h-4"></i>
-            Pick File
+            File
           </button>
           <button id="pick-key-btn" class="ghost-btn hidden" onclick="triggerKeyPicker()">
             <i data-lucide="key" class="w-4 h-4"></i>
-            Pick Key
+            Key
           </button>
           <button id="run-btn" class="ghost-btn" onclick="runCurrentMode()">
             <i id="run-btn-icon" data-lucide="lock" class="w-4 h-4"></i>
@@ -955,6 +972,7 @@
           <i data-lucide="paperclip" class="w-4 h-4 text-slate-400 composer-search-icon"></i>
           <input id="file-input" type="file" />
           <input id="key-file-input" type="file" class="hidden" accept=".json,application/json,.key" />
+          <span id="key-file-state" class="key-file-state hidden">No key chosen</span>
           <select id="algo-select" class="chip" aria-label="Select encryption algorithm">
             <option value="aes-256-gcm">AES-256-GCM</option>
           </select>
@@ -988,9 +1006,11 @@
     const threadIntroTitle = document.getElementById("thread-intro-title");
     const threadIntroCopy = document.getElementById("thread-intro-copy");
     const pickKeyBtn = document.getElementById("pick-key-btn");
+    const keyFileState = document.getElementById("key-file-state");
 
     const MODE_STORAGE_KEY = "vibechad_invert_mode";
     const ENCRYPTOR_MODE_STORAGE_KEY = "encryptchad_mode";
+    const ENCRYPT_HISTORY_STORAGE_KEY = "vibechad_encrypt_history_v1";
     const recentOutputs = [];
     let latestOutput = null;
     let currentMode = "encrypt";
@@ -1019,6 +1039,10 @@
 
       modeEncryptBtn.addEventListener("click", () => setEncryptorMode("encrypt"));
       modeDecryptBtn.addEventListener("click", () => setEncryptorMode("decrypt"));
+      keyFileInput.addEventListener("change", renderKeyFileState);
+
+      hydrateHistory();
+      renderHistory();
 
       encryptorForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -1034,6 +1058,11 @@
       keyFileInput.click();
     }
 
+    function renderKeyFileState() {
+      const keyFile = keyFileInput.files && keyFileInput.files[0];
+      keyFileState.textContent = keyFile ? keyFile.name : "No key chosen";
+    }
+
     function setTargetAlgo(algorithm) {
       algoSelect.value = algorithm;
       showToast(`Algorithm set to ${algorithm.toUpperCase()}.`);
@@ -1046,6 +1075,7 @@
       });
       recentOutputs.length = 0;
       latestOutput = null;
+      persistHistory();
       renderHistory();
       showToast("History cleared.");
     }
@@ -1080,6 +1110,8 @@
 
       try {
         const result = await encryptFile(file, algorithm);
+        const outputDataUrl = await blobToDataUrl(result.blob);
+        const keyDataUrl = await blobToDataUrl(result.keyBlob);
         const outputUrl = URL.createObjectURL(result.blob);
         const keyUrl = URL.createObjectURL(result.keyBlob);
         const record = {
@@ -1087,7 +1119,9 @@
           inputName: file.name,
           algorithm: result.algorithm,
           note: result.note,
+          dataUrl: outputDataUrl,
           url: outputUrl,
+          keyDataUrl,
           keyUrl,
           keyPackage: result.keyPackage,
           keyFileName: result.keyFileName,
@@ -1100,9 +1134,10 @@
         if (recentOutputs.length > 25) {
           const dropped = recentOutputs.pop();
           URL.revokeObjectURL(dropped.url);
-          URL.revokeObjectURL(dropped.keyUrl);
+          if (dropped.keyUrl) URL.revokeObjectURL(dropped.keyUrl);
         }
 
+        persistHistory();
         appendOutputMessage(record);
         renderHistory();
         showToast("File encrypted.");
@@ -1129,13 +1164,16 @@
       try {
         const keyPackageText = await keyFile.text();
         const result = await decryptFile(encryptedFile, keyPackageText);
+        const outputDataUrl = await blobToDataUrl(result.blob);
         const outputUrl = URL.createObjectURL(result.blob);
         const record = {
           name: result.name,
           inputName: encryptedFile.name,
           algorithm: result.algorithm,
           note: result.note,
+          dataUrl: outputDataUrl,
           url: outputUrl,
+          keyDataUrl: "",
           keyUrl: null,
           keyPackage: "",
           keyFileName: "",
@@ -1151,6 +1189,7 @@
           if (dropped.keyUrl) URL.revokeObjectURL(dropped.keyUrl);
         }
 
+        persistHistory();
         appendOutputMessage(record);
         renderHistory();
         showToast("File decrypted.");
@@ -1373,9 +1412,11 @@
       algoSelect.classList.toggle("hidden", isDecrypt);
       keyFileInput.classList.toggle("hidden", !isDecrypt);
       pickKeyBtn.classList.toggle("hidden", !isDecrypt);
+      keyFileState.classList.toggle("hidden", !isDecrypt);
 
       fileInput.value = "";
       keyFileInput.value = "";
+      renderKeyFileState();
 
       if (isDecrypt) {
         sidebarTitle.textContent = "Decrypt with key package";
@@ -1405,8 +1446,72 @@
     function downloadFromHistory(index) {
       const item = recentOutputs[index];
       if (!item) return;
+      if (!item.url && item.dataUrl) {
+        item.url = URL.createObjectURL(dataUrlToBlob(item.dataUrl));
+      }
+      if (!item.url) {
+        showToast("File data missing.");
+        return;
+      }
       downloadFile(item.url, item.name);
       showToast("Downloaded from history.");
+    }
+
+    function persistHistory() {
+      try {
+        const serializable = recentOutputs.slice(0, 25).map((item) => ({
+          name: item.name,
+          inputName: item.inputName,
+          algorithm: item.algorithm,
+          note: item.note,
+          dataUrl: item.dataUrl,
+          keyDataUrl: item.keyDataUrl || "",
+          keyPackage: item.keyPackage || "",
+          keyFileName: item.keyFileName || "",
+          mode: item.mode || "encrypt",
+          time: item.time
+        }));
+        localStorage.setItem(ENCRYPT_HISTORY_STORAGE_KEY, JSON.stringify(serializable));
+      } catch {
+      }
+    }
+
+    function hydrateHistory() {
+      try {
+        const raw = localStorage.getItem(ENCRYPT_HISTORY_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return;
+
+        recentOutputs.length = 0;
+        parsed.slice(0, 25).forEach((item) => {
+          if (!item || typeof item !== "object") return;
+          const dataUrl = String(item.dataUrl || "");
+          const name = String(item.name || "").trim();
+          if (!dataUrl || !name) return;
+
+          const url = URL.createObjectURL(dataUrlToBlob(dataUrl));
+          const keyDataUrl = String(item.keyDataUrl || "");
+          const keyUrl = keyDataUrl ? URL.createObjectURL(dataUrlToBlob(keyDataUrl)) : null;
+
+          recentOutputs.push({
+            name,
+            inputName: String(item.inputName || "unknown"),
+            algorithm: String(item.algorithm || ""),
+            note: String(item.note || ""),
+            dataUrl,
+            url,
+            keyDataUrl,
+            keyUrl,
+            keyPackage: String(item.keyPackage || ""),
+            keyFileName: String(item.keyFileName || ""),
+            mode: String(item.mode || "encrypt"),
+            time: String(item.time || "")
+          });
+        });
+        latestOutput = recentOutputs[0] || null;
+      } catch {
+      }
     }
 
     function downloadFile(url, name) {
@@ -1416,6 +1521,27 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error("Could not encode file data."));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function dataUrlToBlob(dataUrl) {
+      const [meta, base64] = String(dataUrl).split(",");
+      const mimeMatch = /^data:([^;]+);base64$/i.exec(meta || "");
+      const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+      const binary = atob(base64 || "");
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new Blob([bytes], { type: mime });
     }
 
     function stripExtension(filename) {

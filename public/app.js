@@ -5,6 +5,7 @@ const savedList = document.getElementById("saved-list");
 const toast = document.getElementById("toast");
 const modeToggleBtn = document.getElementById("mode-toggle-btn");
 const MODE_STORAGE_KEY = "vibechad_invert_mode";
+const PIRATE_SAVED_RESULTS_STORAGE_KEY = "vibechad_pirate_saved_results_v1";
 const API_BASE =
   window.location.protocol === "file:" ? "http://localhost:3000" : window.location.origin;
 
@@ -16,6 +17,7 @@ let messageCounter = 0;
 
 document.addEventListener("DOMContentLoaded", () => {
   lucide.createIcons();
+  loadSavedResultsFromStorage();
   renderSavedResults();
 
   const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
@@ -178,7 +180,7 @@ function appendAiResult(result) {
     <p class="font-semibold text-lg">Download results: ${escapeHtml(result.title || "media")}</p>
     <p class="mt-1">Source: ${escapeHtml(result.sourceUrl)}</p>
     <div class="idea-grid">${fileCards}</div>
-    <p class="muted mt-3 idea-note">Files provided by PirateCHAD™.</p>
+    <p class="muted mt-3 idea-note" style="color:#ffe35a !important;">Files provided by PirateCHAD™.</p>
   `;
 
   thread.appendChild(msg);
@@ -305,6 +307,10 @@ function saveCurrentResult() {
     files: selectedResult.files.map((file) => ({ ...file })),
     savedAt: new Date().toLocaleTimeString()
   });
+  if (savedResults.length > 25) {
+    savedResults.length = 25;
+  }
+  persistSavedResults();
   renderSavedResults();
   showToast("Download result saved.");
 }
@@ -318,6 +324,7 @@ function loadSavedResult(index) {
 
 function clearSavedIdeas() {
   savedResults.length = 0;
+  persistSavedResults();
   renderSavedResults();
   showToast("Saved downloads cleared.");
 }
@@ -365,6 +372,49 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.add("opacity-0", "translate-y-3");
   }, 1700);
+}
+
+function loadSavedResultsFromStorage() {
+  try {
+    const raw = localStorage.getItem(PIRATE_SAVED_RESULTS_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return;
+
+    savedResults.length = 0;
+    parsed.forEach((item) => {
+      if (!item || typeof item !== "object") return;
+      const sourceUrl = String(item.sourceUrl || "").trim();
+      const title = String(item.title || "media").trim();
+      const savedAt = String(item.savedAt || "").trim() || new Date().toLocaleTimeString();
+      const files = Array.isArray(item.files)
+        ? item.files
+            .filter((file) => file && typeof file === "object")
+            .map((file) => ({
+              formatId: String(file.formatId || ""),
+              fileName: String(file.fileName || ""),
+              label: String(file.label || ""),
+              filesize: Number(file.filesize || 0) || undefined
+            }))
+            .filter((file) => file.formatId)
+        : [];
+
+      if (!sourceUrl || !files.length) return;
+      savedResults.push({ sourceUrl, title, files, savedAt });
+    });
+
+    if (savedResults.length > 25) {
+      savedResults.length = 25;
+    }
+  } catch {
+  }
+}
+
+function persistSavedResults() {
+  try {
+    localStorage.setItem(PIRATE_SAVED_RESULTS_STORAGE_KEY, JSON.stringify(savedResults));
+  } catch {
+  }
 }
 
 function escapeHtml(input) {
